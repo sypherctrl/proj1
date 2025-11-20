@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #define MAXCAPACITY 256
 
@@ -48,18 +49,22 @@ int getInput(char *line, int lineSize) {
         line[strcspn(line, "\n")] = '\0';
         printf("Input string is valid. \n"); 
         return 1;
-        } else if(lineSize > (MAXCAPACITY - 1)) {
-            printf("Error reading input.\n");
-            return 0;
-    } else if (fgets(line, lineSize, stdin) == NULL) {
+        }
+    if(lineSize > (MAXCAPACITY - 1)) {
+        printf("Error reading input.\n");
+        return 0;
+        } 
+    if (fgets(line, lineSize, stdin) == NULL) {
         printf("EOF was reached.\n");
         return 0;
-    } else {
+        } else {
         printf("Error reading input.\n");
         return 0;
     }
 }
 
+//out is a pointer to the struct command
+//out->type means write into the type field inside that struct
 int cmdParser(char *line, struct command *out) {
     /* 1. Take *line as input.
     2. Split into space seperated tokens using strtok()
@@ -70,9 +75,47 @@ int cmdParser(char *line, struct command *out) {
     4. set out-> key and out->value (or NULL)
     5. return 1 for success, return 0 if parsing failed.
     */
+    char *token;
+    char *token0;
+    char *token1;
+    char *token2;
+    char *saveptr; // Pointer for strtok_r's internal state
+
+    if (line == NULL) {
+        perror("strdup failed");
+        return 0;
+    }
+    // First call to strtok_r: pass the string to be tokenized
+    token0 = strtok_r(line, " ", &saveptr);
+    token1 = strtok_r(NULL, " ", &saveptr);
+    token2 = strtok_r(NULL, " ", &saveptr);
+
+    if (strcmp(token0, "get") == 0) {
+        out->type = CMD_GET;
+        out->key = token1;
+        out->value = NULL;
+    } else if (strcmp(token0, "set") == 0) {
+        out->type = CMD_SET;
+        out->key = token1;
+        out->value = token2;
+    } else if (strcmp(token0, "del") == 0) {
+        out->type = CMD_DEL;
+        out->key = token1;
+        out->value = NULL;
+    } else if (strcmp(token0, "list") == 0) {
+        out->type = CMD_LIST;
+        out->key = NULL;
+        out->value = NULL;
+    } else if (strcmp(token0, "quit") == 0) {
+        out->type = CMD_QUIT;
+        out->key = NULL;
+        out->value = NULL;
+    } else {
+        out->type = CMD_UNKNOWN;
+        return 0;   // parsing failed
+    }
+
     return 1;
-
-
 }
 
 // allocate & initialize a DB with some initial capacity
