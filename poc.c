@@ -51,11 +51,13 @@ int getInput(char *line, int lineSize) {
         } else if(lineSize > (MAXCAPACITY - 1)) {
             printf("Error reading input.\n");
             return 0;
-        } else {
+    } else if (fgets(line, lineSize, stdin) == NULL) {
+        printf("EOF was reached.\n");
+        return 0;
+    } else {
         printf("Error reading input.\n");
         return 0;
     }
-
 }
 
 int cmdParser(char *line, struct command *out) {
