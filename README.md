@@ -71,7 +71,41 @@ Maximum value length: 65
 Maximum number of items in the database: 100
 Maximum number of clients: 8
 
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+In what order should you implement things?
+
+1. Implement and test getInput.
+Make sure it reads a line from stdin, strips the newline, and handles EOF/error correctly.
+Print what you read back out to confirm it behaves as expected.
+
+2. Implement and test cmdParser.
+Feed it simple test strings (like "set x 10", "get x", "list") and print out:
+what command type it detected
+what it thinks key and value are
+Don’t touch the database yet. Just make parsing correct and predictable.
+
+3. Implement the basic database structure and lifecycle (db_init, db_free).
+Create the database instance in main.
+Call the init function once, free it at the end.
+Maybe print some debug info to ensure counts/capacity look right.
+
+4. Implement db_set, db_get, db_del for a simple linear search.
+For now: no hashing, just loop over entries and compare keys.
+Test them with hard-coded calls before wiring to the parser.
+
+5. Wire everything together in main.
+In the input loop:
+call getInput
+call cmdParser
+use a switch on the command type to call the right db_ function and print responses.
+
+6. Finally, implement db_list and bubble sort on the returned keys.
+Use it to implement the LIST command.
+After that, you’ll have a functioning little in-memory key–value REPL. Then you can start thinking about:
+file persistence
+sockets / TCP
+threads
 
 
 
