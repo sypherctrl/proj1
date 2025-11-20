@@ -94,22 +94,37 @@ int cmdParser(char *line, struct command *out) {
         out->type = CMD_GET;
         out->key = token1;
         out->value = NULL;
+        printf("Cmd is: get \n");
+        printf("Key is: %s \n", out->key);
+        printf("Value is: %s\n", out->value);
     } else if (strcmp(token0, "set") == 0) {
         out->type = CMD_SET;
         out->key = token1;
         out->value = token2;
+        printf("Cmd is: set \n");
+        printf("Key is: %s \n", out->key);
+        printf("Value is: %s \n", out->value);
     } else if (strcmp(token0, "del") == 0) {
         out->type = CMD_DEL;
         out->key = token1;
         out->value = NULL;
+        printf("Cmd is: del \n");
+        printf("Key is: %s \n", out->key);
+        printf("Value is: %s \n", out->value);
     } else if (strcmp(token0, "list") == 0) {
         out->type = CMD_LIST;
         out->key = NULL;
         out->value = NULL;
+        printf("Cmd is: list \n");
+        printf("Key is: %s \n", out->key);
+        printf("Value is: %s \n", out->value);
     } else if (strcmp(token0, "quit") == 0) {
         out->type = CMD_QUIT;
         out->key = NULL;
         out->value = NULL;
+        printf("Cmd is: quit \n");
+        printf("Key is: %s\n", out->key);
+        printf("Value is: %s\n", out->value);
     } else {
         out->type = CMD_UNKNOWN;
         return 0;   // parsing failed
