@@ -1,3 +1,4 @@
+//0621 taking a break bc i can feel my brain frying
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -49,14 +50,6 @@ int getInput(char *line, int lineSize) {
         line[strcspn(line, "\n")] = '\0';
         printf("Input string is valid. \n"); 
         return 1;
-        }
-    if(lineSize > (MAXCAPACITY - 1)) {
-        printf("Error reading input.\n");
-        return 0;
-        } 
-    if (fgets(line, lineSize, stdin) == NULL) {
-        printf("EOF was reached.\n");
-        return 0;
         } else {
         printf("Error reading input.\n");
         return 0;
@@ -75,22 +68,19 @@ int cmdParser(char *line, struct command *out) {
     4. set out-> key and out->value (or NULL)
     5. return 1 for success, return 0 if parsing failed.
     */
-    char *token;
     char *token0;
     char *token1;
     char *token2;
     char *saveptr; // Pointer for strtok_r's internal state
 
-    if (line == NULL) {
-        perror("strdup failed");
-        return 0;
-    }
     // First call to strtok_r: pass the string to be tokenized
     token0 = strtok_r(line, " ", &saveptr);
     token1 = strtok_r(NULL, " ", &saveptr);
     token2 = strtok_r(NULL, " ", &saveptr);
 
-    if (strcmp(token0, "get") == 0) {
+    if (strcmp(token0, " ") == 0) {
+        printf("No command was given. \n");
+    } else if (strcmp(token0, "get") == 0) {
         out->type = CMD_GET;
         out->key = token1;
         out->value = NULL;
@@ -127,14 +117,20 @@ int cmdParser(char *line, struct command *out) {
         printf("Value is: %s\n", out->value);
     } else {
         out->type = CMD_UNKNOWN;
+        printf("Cmd is: unknown. Further input is ignored. \n");
         return 0;   // parsing failed
     }
 
     return 1;
 }
 
+//database struct will be onthe stack in main
+//entries array will be on the heap (by dynamically allocated)
 // allocate & initialize a DB with some initial capacity
 int db_init(struct database *db, int dbCapacity) {
+    db->count = 0;
+    db->capacity = MAXCAPACITY;
+
     return 1;
 }
 
@@ -157,9 +153,15 @@ int db_list(const struct database *db, const char **keys_out, int max_keys);
 
 int main() {
 
+    //create a db struct on the stack. its a place for entries to point to.
+    struct database db;
+    db_init(&db, MAXCAPACITY);
+
     // call getInput()
     char line[MAXCAPACITY];
     printf("Enter input: \n");
+    
+    //input loop
     while(getInput(line, sizeof(line))) {
         
         //parsing error
@@ -167,6 +169,9 @@ int main() {
 
         }
     }
+
+    //free db
+   // db_free(&db);
 
     /* db_list(db): return a list/array of keys that you can then bubble sort */
     
