@@ -95,10 +95,10 @@ int main(void) {
 skeleton v3:
 */
 
+    
 #include <stdio.h>
 #define MAXCAPACITY 256
 
-    //input returned string as input for cmdParser()
     //define an enum for cmd types
     enum commandType {
             CMD_GET,
@@ -131,7 +131,7 @@ skeleton v3:
         int count;      //how many entries are actually used
         int capacity;   //how big the entries array is
         //use malloc/realloc/etc to grow it later
-    }
+    };
 
 // for ONLY input reading
 int getInput(char *buffer, int bufferSize) {
@@ -179,17 +179,27 @@ int main() {
     // call getInput()
     char line[MAXCAPACITY];
 
-    if (!cmdParser(line, &cmd)) {
-        //parsing error
-    }
-
     while(getInput(line, sizeof(line))) {
-        //whatever
+        //parsing error
+        if (!cmdParser(line, &cmd)) {
+
+    }
     }
 
     /* db_list(db): return a list/array of keys that you can then bubble sort */
     
     return 0;
 }
-    
+
+
+
+
+
+
+
+
+
+
+
+
 
