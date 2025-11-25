@@ -47,7 +47,7 @@ int getInput(char *buffer, int bufferSize) {
     2. delete the \n, ensure \0 is at the end
     3. return 1 for success, return 0 if EOF or error
     */
-
+    return 0;       //temp return value
 }
 
 int cmdParser(char *line, struct operation *out) {
@@ -60,7 +60,7 @@ int cmdParser(char *line, struct operation *out) {
     4. set out-> key and out->value (or NULL)
     5. return 1 for success, return 0 if parsing failed.
     */
-
+    return 0;       //temp return value
 }
 
 // allocate & initialize a DB with some initial capacity
@@ -71,8 +71,13 @@ int db_init(struct database *db, int capacity) {
   //create an instance of entry structure called arrEnt (array of Entries) on heap
    struct entry *arrEnt = (struct entry *)calloc(capacity, sizeof(struct entry));
 
+    //if calloc fails, arrEnt will be NULL
+    if (arrEnt == NULL) {
+        printf("calloc failed, arrEnt is NULL\n");
+        return 0;
+    }
+   
   // if calloc succeeds, then:
-
   //store the addr of arrEnt in db->ptr_to_arrEnt. THIS IS THE SAME MEMORY AS THE DB IN MAIN
    db->ptr_to_arrEnt = arrEnt;
   
@@ -85,7 +90,7 @@ int db_init(struct database *db, int capacity) {
     }
     return 1;  
 
-    //if calloc fails, then:
+    //idk what its for??
     if (!db_init(&db, MAXCAPACITY)) {
     fprintf(stderr, "db_init failed\n");
     return 1;
