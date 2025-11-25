@@ -111,20 +111,11 @@ int db_set(struct database *db, const char *key, const char *value) {
         for (int i = 0; i < db->capacity; i++) {
             // e points to actual entry in database array
             struct entry *e = &db->ptr_to_arrEnt[i];   
-
-            if(e->in_use == 0) {
-                continue;              // skip if in_use == 0
-            } else if (e->in_use == 1) {
-                // strcmp entry.key with the key arguement
-                // if match, its an existing key so update path
-                if (strcmp(e->key, key) == 0) { 
-                    found = e;
-                    break;
-                }
-
+            
+            if(e->in_use == 0) continue;    //find existing key 
+            if (e->in_use == 1 && strcmp(e->key, key) == 0) found = e; break; 
             } 
         }
-
         // if in_use == 1 and entry.key == key then:
         // update
         // allocate new copy of value
@@ -142,16 +133,37 @@ int db_set(struct database *db, const char *key, const char *value) {
         // set entry.in_use = 1
         // increment db->count
         // return 1 success
-
-
-    }
     if (found != NULL) {
         printf("UPDATE PATH");
+        if (value == NULL) { printf("Value is NULL in Update Path\n"); return 0; }
+        else {  // validate value
+            int len = strlen(value);
+            char *newHeapBuffer;
+            newHeapBuffer = (char *)malloc(len + 1);    // allocate new heap buffer for the new value
+                    // if allocation fails, return 0 (do not change the entry)
+                    if (newHeapBuffer == NULL) {
+                    printf("Update Path memory allocation failed.\n");
+                    } else {
+                    // copy string from value into newHeapBuffer (no '\0')
+                    for (int j = 0; j < strlen(value); j++) {
+                    newHeapBuffer[j] = value;
+                    }
+                
+                // free the old found->value if it exists
+                if ((found->value) != NULL) {
+                    free(found->value);
+                    found->value = newHeapBuffer;
+                } else {
+                // store the new pointer in found->value
+                found->value = newHeapBuffer;
+                }
+            }
+        }
     } else {
         printf("INSERT PATH");
     }
 
-    return 1; 
+    return 1; // 1 = success, 0 = failed
 }
 
 
