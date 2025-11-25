@@ -95,13 +95,13 @@ int db_set(struct database *db, const char *key, const char *value) {
         // 1. search for existing key. 
         // loop over all entries
         for (int i = 0; i < db->capacity; i++) {
-            // e points to actual entry in database array
-            struct entry *e = &db->ptr_to_arrEnt[i];   
+        // e points to actual entry in database array
+        struct entry *e = &db->ptr_to_arrEnt[i];   
             
-            if(e->in_use == 0) continue;    //find existing key 
-            if (e->in_use == 1 && strcmp(e->key, key) == 0) found = e; break; 
-            } 
-        }
+        if(e->in_use == 0) continue;    //find existing key 
+            if (e->in_use == 1 && strcmp(e->key, key) == 0) { found = e; break; }
+        } 
+    }
         // if in_use == 1 and entry.key == key then:
         // update
         // allocate new copy of value
@@ -129,11 +129,13 @@ int db_set(struct database *db, const char *key, const char *value) {
                     // if allocation fails, return 0 (do not change the entry)
                     if (newHeapBuffer == NULL) {
                     printf("Update Path memory allocation failed.\n");
+                    return 0;
                     } else {
                     // copy string from value into newHeapBuffer (no '\0')
-                    for (int j = 0; j < strlen(value); j++) {
-                    newHeapBuffer[j] = value;
+                    for (int j = 0; j < len; j++) {
+                    newHeapBuffer[j] = value[j];
                     }
+                    newHeapBuffer = newHeapBuffer + '\0';
                 
                 // free the old found->value if it exists
                 if ((found->value) != NULL) {
@@ -148,8 +150,9 @@ int db_set(struct database *db, const char *key, const char *value) {
     } else {
         printf("INSERT PATH");
     }
-
+    // make sure the only paths that reach return 1 are "update succeeded" or "insert succeeded"
     return 1; // 1 = success, 0 = failed
+    // return 0 when db is NULL / key is NULL, malloc fails, db is full for an insert, etc
 }
 
 
