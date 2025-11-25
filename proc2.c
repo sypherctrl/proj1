@@ -99,7 +99,7 @@ int db_set(struct database *db, const char *key, const char *value) {
         struct entry *e = &db->ptr_to_arrEnt[i];   
             
         if(e->in_use == 0) continue;    //find existing key 
-            if (e->in_use == 1 && strcmp(e->key, key) == 0) { found = e; break; }
+        if (e->in_use == 1 && strcmp(e->key, key) == 0) { found = e; break; }
         } 
     }
         // if in_use == 1 and entry.key == key then:
@@ -135,7 +135,7 @@ int db_set(struct database *db, const char *key, const char *value) {
                     for (int j = 0; j < len; j++) {
                     newHeapBuffer[j] = value[j];
                     }
-                    newHeapBuffer = newHeapBuffer + '\0';
+                    newHeapBuffer[len] = '\0';
                 
                 // free the old found->value if it exists
                 if ((found->value) != NULL) {
