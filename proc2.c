@@ -144,110 +144,109 @@ Option C: Flesh out cmdParser so you can type set foo bar and see it parsed,
 
 // set key -> value (update or insert)
 int db_set(struct database *db, const char *key, const char *value) {
-    struct entry *found = NULL;
-
     if (db == NULL) {
         printf("db pointer is NULL, failed db_set\n");
         return 0;
-    } else if (key == NULL) {
+    }
+    if (key == NULL) {
         printf("key is NULL, failed db_set\n");
         return 0;
-    } else {
-        // 1. search for existing key. 
-        // loop over all entries
-        for (int i = 0; i < db->capacity; i++) {
-        // e points to actual entry in database array
-        struct entry *e = &db->ptr_to_arrEnt[i];   
-            
-        if(e->in_use == 0) continue;    //find existing key 
-        if (e->in_use == 1 && strcmp(e->key, key) == 0) { found = e; break; }
-        } 
     }
 
-    if (found != NULL) {
-        printf("UPDATE PATH\n");
-        if (value == NULL) { printf("Value is NULL in Update Path\n"); return 0; }
-        else {  // validate value
-            int value_len = strlen(value);
-            char *value_copy = malloc(value_len + 1);    // allocate new heap buffer for the new value
-                    // if allocation fails, return 0 (do not change the entry)
-                    if (!value_copy == NULL) {
-                    printf("Update Path memory allocation failed.\n");
-                    return 0;
-                    } 
-                    memcpy(value_copy, value, value_len + 1);
-                
-                    // free the old found->value if it exists
-                    if ((found->value) != NULL) {
-                        free(found->value);
-                    } found->value = value_copy;
-                    return 1;   // success if update succeeds
-                }
-            }
-        } else {
-        printf("INSERT PATH\n");
-        if (db->count == db->capacity) {
-            printf("db_set insert failed: database full\n");
-            return 0;
-        } else {
-            // find a free spot
-            struct entry *free_slot = NULL;
-            for (int i = 0; i < db->capacity; i++) {
-                // e points to actual entry in database array
-                struct entry *e = &db->ptr_to_arrEnt[i];
-                if (e->in_use == 0) {
-                    free_slot = e;
-                    break;
-                }
-            }
-            if (free_slot == NULL) {
-                printf("db_set insert: no free slot found but db-> count < capacity\n");
-                return 0;
-            }
-            if (value == NULL) { printf("Insert path: value is NULL.\n"); return 0; }
+    struct entry *found = NULL;
 
-            // allocate heap copy of key
-            int key_len = strlen(key);
-            char *key_copy;
-            key_copy = (char *)malloc(key_len + 1);    // allocate new heap buffer for the new key
-            // if allocation fails, return 0 (do not change the entry)
-            if (key_copy == NULL) {
-            printf("Insert path: key allocation failed\n");
-            return 0;
-            } else {
-                // copy string from key into key_copy (no '\0')
-                for (int j = 0; j < key_len; j++) {
-                    key_copy[j] = key[j];
-                }
-                key_copy[key_len] = '\0';
-            }
+    // 1. search for existing key
+    for (int i = 0; i < db->capacity; i++) {
+        struct entry *e = &db->ptr_to_arrEnt[i];
 
-            //allocate heap copy of value
-            int value_len = strlen(value);
-            char *value_copy;
-            value_copy = (char *)malloc(value_len + 1);    // allocate new heap buffer for the new key
-            // if allocation fails, return 0 (do not change the entry)
-            if (value_copy == NULL) {
-                printf("Insert path: value allocation failed\n");
-                // free key_copy to avoid a leak, then return 0
-                free(key_copy);
-                return 0;
-            } else { 
-                // copy string from value into value_copy
-                for (int j = 0; j < value_len; j++) {
-                    value_copy[j] = value[j];
-                }
-            value_copy[value_len] = '\0';
-
-            free_slot->key = key_copy;
-            free_slot->value = value_copy;
-            free_slot->in_use = 1;
-            db->count++;
-            return 1;  //return success
+        if (!e->in_use) {
+            continue;
+        }
+        if (strcmp(e->key, key) == 0) {
+            found = e;
+            break;
         }
     }
-}
 
+    // 2. UPDATE PATH
+    if (found != NULL) {
+        printf("UPDATE PATH\n");
+
+        if (value == NULL) {
+            printf("Value is NULL in Update Path\n");
+            return 0;
+        }
+
+        int value_len = (int)strlen(value);
+        char *value_copy = malloc(value_len + 1);
+        if (value_copy == NULL) {
+            printf("Update Path memory allocation failed.\n");
+            return 0;
+        }
+
+        memcpy(value_copy, value, value_len + 1); // copies '\0' too
+
+        if (found->value != NULL) {
+            free(found->value);
+        }
+        found->value = value_copy;
+        return 1;
+    }
+
+    // 3. INSERT PATH
+    printf("INSERT PATH\n");
+
+    if (db->count == db->capacity) {
+        printf("db_set insert failed: database full\n");
+        return 0;
+    }
+
+    // find free slot
+    struct entry *free_slot = NULL;
+    for (int i = 0; i < db->capacity; i++) {
+        struct entry *e = &db->ptr_to_arrEnt[i];
+        if (!e->in_use) {
+            free_slot = e;
+            break;
+        }
+    }
+
+    if (free_slot == NULL) {
+        printf("db_set insert: no free slot found but db->count < capacity\n");
+        return 0;
+    }
+
+    if (value == NULL) {
+        printf("Insert path: value is NULL.\n");
+        return 0;
+    }
+
+    // heap copy of key
+    int key_len = (int)strlen(key);
+    char *key_copy = malloc(key_len + 1);
+    if (key_copy == NULL) {
+        printf("Insert path: key allocation failed\n");
+        return 0;
+    }
+    memcpy(key_copy, key, key_len + 1);
+
+    // heap copy of value
+    int value_len = (int)strlen(value);
+    char *value_copy = malloc(value_len + 1);
+    if (value_copy == NULL) {
+        printf("Insert path: value allocation failed\n");
+        free(key_copy);
+        return 0;
+    }
+    memcpy(value_copy, value, value_len + 1);
+
+    free_slot->key   = key_copy;
+    free_slot->value = value_copy;
+    free_slot->in_use = 1;
+    db->count++;
+
+    return 1;
+}
 
 // get value for key (returns pointer or NULL if not found)
 const char *db_get(struct database *db, const char *key){
