@@ -45,6 +45,21 @@ int cmdParser(char *line, struct operation *out) {
     4. set out-> key and out->value (or NULL)
     5. return 1 for success, return 0 if parsing failed.
     */
+    char *input_copy;
+    int input_len = strlen(line);
+    for (int i = 0; i < input_len; i++) {
+        input_copy[i] = line[i];
+    }
+
+    char *delimiter = strtok(input_copy, " ");
+
+    for (int j = 0; j < 3; j++) {
+        token0 = strtok(NULL, " ");
+        token1 = strtok(NULL, " ");
+        token2 = strtok(NULL, " ");
+    }
+    // pretty sure i just need to printf the out ptr from this function, then the tokens will be assigned in main
+
     return 0;       //temp return value
 }
 
@@ -80,6 +95,12 @@ int db_init(struct database *db, int capacity) {
 // free all memory owned by the DB (keys, values, entries array)
 void db_free(struct database *db);
 //free any per-entry strings you allocate, and then free db->ptr_to_arrEnt
+
+/* 
+Option A: Design db_set logically (insert/update behavior, key search, capacity handling),
+Option B: Make getInput actually read from stdin,
+Option C: Flesh out cmdParser so you can type set foo bar and see it parsed,
+*/
 
 // set key -> value (update or insert)
 int db_set(struct database *db, const char *key, const char *value) {
@@ -190,8 +211,7 @@ int db_set(struct database *db, const char *key, const char *value) {
             free_slot->key = key_copy;
             free_slot->value = value_copy;
             free_slot->in_use = 1;
-            db->count++;
-
+            db->count++
             return 1;  //return success
         }
     }
