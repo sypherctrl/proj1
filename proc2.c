@@ -35,7 +35,6 @@
         char *value;    //NULL if not needed
     };
 
- struct operation cmd;
 
 
     
@@ -88,20 +87,73 @@ int db_init(struct database *db, int capacity) {
     db->ptr_to_arrEnt[i].key = NULL;
     db->ptr_to_arrEnt[i].value = NULL;
     }
+    printf("1 is returned on success\n");   //for debug, remove later
     return 1;  
-
-    //idk what its for??
-    if (!db_init(&db, MAXCAPACITY)) {
-    fprintf(stderr, "db_init failed\n");
-    return 1;
-    }
 }
 
 // free all memory owned by the DB (keys, values, entries array)
 void db_free(struct database *db);
+//free any per-entry strings you allocate, and then free db->ptr_to_arrEnt
 
-// set key -> value (insert or update)
-int db_set(struct database *db, const char *key, const char *value);
+// set key -> value (update or insert)
+int db_set(struct database *db, const char *key, const char *value) {
+    struct entry *found = NULL;
+
+    if (db == NULL) {
+        printf("db pointer is NULL, failed db_set\n");
+        return 0;
+    } else if (key == NULL) {
+        printf("key is NULL, failed db_set\n");
+        return 0;
+    } else {
+        // 1. search for existing key. 
+        // loop over all entries
+        for (int i = 0; i < db->capacity; i++) {
+            // e points to actual entry in database array
+            struct entry *e = &db->ptr_to_arrEnt[i];   
+
+            if(e->in_use == 0) {
+                continue;              // skip if in_use == 0
+            } else if (e->in_use == 1) {
+                // strcmp entry.key with the key arguement
+                // if match, its an existing key so update path
+                if (strcmp(e->key, key) == 0) { 
+                    found = e;
+                    break;
+                }
+
+            } 
+        }
+
+        // if in_use == 1 and entry.key == key then:
+        // update
+        // allocate new copy of value
+        // if allocation fails, return 0
+        // free old entry.value
+        // store new value pointer
+        // return 1 success
+
+        // 2. if no existing key found, insert new key
+        // if db->count == db-> capacity then db is full so return 0 fail
+        // find the first entry with in_use == 0
+        // allocate copies of key and value
+        // if allocation fails, free any partial allocations and return 0 fail
+        // set entry.key and entry.value
+        // set entry.in_use = 1
+        // increment db->count
+        // return 1 success
+
+
+    }
+    if (found != NULL) {
+        printf("UPDATE PATH");
+    } else {
+        printf("INSERT PATH");
+    }
+
+    return 1; 
+}
+
 
 // get value for key (returns pointer or NULL if not found)
 const char *db_get(struct database *db, const char *key);
@@ -115,22 +167,25 @@ int db_list(const struct database *db, const char **keys_out, int max_keys);
 //are they copies of keys or pointers into the db?
 
 int main() {
-    //create database instance db
+    struct operation cmd; //in main bc only main uses cmd
     struct database db;
   //hey db_init, heres the addr of my db database. plz go inside it & fill in the values.
-    db_init(&db, MAXCAPACITY);
-  
-    // call getInput()
+    if (db_init(&db, MAXCAPACITY) == 0) {       //initializes the database
+        fprintf(stderr, "db_init failed\n");
+        return 1;
+    } 
+    //if we reach here, db_init was successful
+    // call getInput() to enter input loop
     char line[MAXCAPACITY];
 
     while(getInput(line, sizeof(line))) {
         //parsing error
         if (!cmdParser(line, &cmd)) {
-
+            //parsing failed - handle later
         }
     }
 
     /* db_list(db): return a list/array of keys that you can then bubble sort */
     
-    return 0;
+    return 0;       //success
 }
