@@ -103,27 +103,8 @@ int db_set(struct database *db, const char *key, const char *value) {
         } 
     }
 
-        /* if in_use == 1 and entry.key == key then:
-        update
-        allocate new copy of value
-        if allocation fails, return 0
-        free old entry.value
-        store new value pointer
-        return 1 success
-
-        2. if no existing key found, insert new key
-        if db->count == db-> capacity then db is full so return 0 fail
-        find the first entry with in_use == 0
-        allocate copies of key and value
-        if allocation fails, free any partial allocations and return 0 fail
-        set entry.key and entry.value
-        set entry.in_use = 1
-        increment db->count
-        return 1 success      */
-
-
     if (found != NULL) {
-        printf("UPDATE PATH");
+        printf("UPDATE PATH\n");
         if (value == NULL) { printf("Value is NULL in Update Path\n"); return 0; }
         else {  // validate value
             int value_len = strlen(value);
@@ -147,11 +128,12 @@ int db_set(struct database *db, const char *key, const char *value) {
                 } else {
                 // store the new pointer in found->value
                 found->value = value_copy;
+                return 1;   // success if update succeeds
                 }
             }
         }
     } else {
-        printf("INSERT PATH");
+        printf("INSERT PATH\n");
         if (db->count == db->capacity) {
             printf("db_set insert failed: database full\n");
             return 0;
@@ -194,28 +176,25 @@ int db_set(struct database *db, const char *key, const char *value) {
             value_copy = (char *)malloc(value_len + 1);    // allocate new heap buffer for the new key
             // if allocation fails, return 0 (do not change the entry)
             if (value_copy == NULL) {
-            printf("Insert path: value allocation failed\n");
-            return 0;
-            } else {
+                printf("Insert path: value allocation failed\n");
                 // free key_copy to avoid a leak, then return 0
                 free(key_copy);
                 return 0;
-
+            } else { 
                 // copy string from value into value_copy
                 for (int j = 0; j < value_len; j++) {
                     value_copy[j] = value[j];
                 }
-                value_copy[value_len] = '\0';
+            value_copy[value_len] = '\0';
 
+            free_slot->key = key_copy;
+            free_slot->value = value_copy;
+            free_slot->in_use = 1;
+            db->count++;
+
+            return 1;  //return success
         }
-    free_slot->key = key_copy;
-    free_slot->value = value-copy;
-    free_slot->in_use = 1;
-    db->count++;
     }
-    // make sure the only paths that reach return 1 are "update succeeded" or "insert succeeded"
-    return 1; // 1 = success, 0 = failed
-    // return 0 when db is NULL / key is NULL, malloc fails, db is full for an insert, etc
 }
 
 
