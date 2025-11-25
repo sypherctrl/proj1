@@ -30,9 +30,29 @@ int getInput(char *buffer, int bufferSize) {
     /* 1. read line until \n (from stdin into buffer)
     ensure its a valid C string, error if not
     2. delete the \n, ensure \0 is at the end
-    3. return 1 for success, return 0 if EOF or error
-    */
-    return 0;       //temp return value
+    3. return 1 for success, return 0 if EOF or error */
+    // can't store anything useful if buffer is too small
+    if (buffer == NULL || bufferSize <= 1) {
+        return 0;
+    }
+    if (fgets(buffer, bufferSize, stdin) == NULL) {     // NULL being eof or error
+        return 0;
+    }
+
+    // at this point buffer is a valid C string
+    size_t len = strlen(buffer);
+    
+    // if we got a newline, strip it
+    if (len > 0 && buffer[len - 1] == '\n') {
+        buffer[len - 1] = '\0';
+        return 1;
+    }
+    // if there's no newline, the line was longer than bufferSize-1.
+    // flush the rest of the line so it doesn't mess up the next read.
+    int ch;
+    while ((ch = getchar()) != '\n' && ch != EOF);
+    // treat this as an error (input too long for buffer)
+    return 0;
 }
 
 int cmdParser(char *line, struct operation *out) {
@@ -43,24 +63,42 @@ int cmdParser(char *line, struct operation *out) {
     token 2 --> value (may include spaces but thats later)
     3. compare the cmd (token 0) to known commands and set out-->type
     4. set out-> key and out->value (or NULL)
-    5. return 1 for success, return 0 if parsing failed.
-    */
-    char *input_copy;
-    int input_len = strlen(line);
-    for (int i = 0; i < input_len; i++) {
-        input_copy[i] = line[i];
+    5. return 1 for success, return 0 if parsing failed   */
+    // initialize output
+    out->key = NULL;
+    out->value = NULL;
+    out->type = CMD_UNKNOWN;
+
+    // tokenize in-place
+    char *token0 = strtok(line, " ");
+    char *token1 = strtok(NULL, " ");
+    char *token2 = strtok(NULL, ""); // rest of line (may be NULL)
+
+    if (token0 == NULL) {
+        return 0; // no command
     }
 
-    char *delimiter = strtok(input_copy, " ");
-
-    for (int j = 0; j < 3; j++) {
-        token0 = strtok(NULL, " ");
-        token1 = strtok(NULL, " ");
-        token2 = strtok(NULL, " ");
+    // determine type
+    if (strcmp(token0, "get") == 0) {
+        out->type = CMD_GET;
+        out->key = token1;
+    } else if (strcmp(token0, "set") == 0) {
+        out->type = CMD_SET;
+        out->key = token1;
+        out->value = token2;
+    } else if (strcmp(token0, "del") == 0) {
+        out->type = CMD_DEL;
+        out->key = token1;
+    } else if (strcmp(token0, "list") == 0) {
+        out->type = CMD_LIST;
+    } else if (strcmp(token0, "quit") == 0) {
+        out->type = CMD_QUIT;
+    } else {
+        out->type = CMD_UNKNOWN;
     }
-    // pretty sure i just need to printf the out ptr from this function, then the tokens will be assigned in main
 
-    return 0;       //temp return value
+    // basic validation (tighten later)
+    return 1;
 }
 
 // allocate & initialize a DB with some initial capacity
@@ -88,13 +126,15 @@ int db_init(struct database *db, int capacity) {
     db->ptr_to_arrEnt[i].key = NULL;
     db->ptr_to_arrEnt[i].value = NULL;
     }
-    printf("1 is returned on success\n");   //for debug, remove later
+    fprintf(stderr, "db_init: capacity=%d\n", capacity);   //for debug
     return 1;  
 }
 
 // free all memory owned by the DB (keys, values, entries array)
-void db_free(struct database *db);
-//free any per-entry strings you allocate, and then free db->ptr_to_arrEnt
+void db_free(struct database *db) {
+    (void)db;
+    //free any per-entry strings you allocate, and then free db->ptr_to_arrEnt
+}
 
 /* 
 Option A: Design db_set logically (insert/update behavior, key search, capacity handling),
@@ -129,31 +169,22 @@ int db_set(struct database *db, const char *key, const char *value) {
         if (value == NULL) { printf("Value is NULL in Update Path\n"); return 0; }
         else {  // validate value
             int value_len = strlen(value);
-            char *value_copy;
-            value_copy = (char *)malloc(value_len + 1);    // allocate new heap buffer for the new value
+            char *value_copy = malloc(value_len + 1);    // allocate new heap buffer for the new value
                     // if allocation fails, return 0 (do not change the entry)
-                    if (value_copy == NULL) {
+                    if (!value_copy == NULL) {
                     printf("Update Path memory allocation failed.\n");
                     return 0;
-                    } else {
-                    // copy string from value into newHeapBuffer (no '\0')
-                    for (int j = 0; j < value_len; j++) {
-                    value_copy[j] = value[j];
-                    }
-                    value_copy[value_len] = '\0';
+                    } 
+                    memcpy(value_copy, value, value_len + 1);
                 
-                // free the old found->value if it exists
-                if ((found->value) != NULL) {
-                    free(found->value);
-                    found->value = value_copy;
-                } else {
-                // store the new pointer in found->value
-                found->value = value_copy;
-                return 1;   // success if update succeeds
+                    // free the old found->value if it exists
+                    if ((found->value) != NULL) {
+                        free(found->value);
+                    } found->value = value_copy;
+                    return 1;   // success if update succeeds
                 }
             }
-        }
-    } else {
+        } else {
         printf("INSERT PATH\n");
         if (db->count == db->capacity) {
             printf("db_set insert failed: database full\n");
@@ -211,7 +242,7 @@ int db_set(struct database *db, const char *key, const char *value) {
             free_slot->key = key_copy;
             free_slot->value = value_copy;
             free_slot->in_use = 1;
-            db->count++
+            db->count++;
             return 1;  //return success
         }
     }
@@ -219,15 +250,24 @@ int db_set(struct database *db, const char *key, const char *value) {
 
 
 // get value for key (returns pointer or NULL if not found)
-const char *db_get(struct database *db, const char *key);
+const char *db_get(struct database *db, const char *key){
+    (void)db; (void)key;
+    return NULL;
+}
 
 // delete key (returns 1 if found+deleted, 0 if not found)
-int db_del(struct database *db, const char *key);
+int db_del(struct database *db, const char *key){
+    (void)db; (void)key;
+    return 0;
+}
 
 // list keys into an array you pass in, or return count
-int db_list(const struct database *db, const char **keys_out, int max_keys);
+int db_list(const struct database *db, const char **keys_out, int max_keys) {
+    (void)db; (void)keys_out; (void)max_keys;
+    return 0;
 //where does keys_out and max_keys live? stack array? dynamically allocated? 
 //are they copies of keys or pointers into the db?
+}
 
 int main() {
     struct operation cmd; //in main bc only main uses cmd
@@ -244,8 +284,13 @@ int main() {
     while(getInput(line, sizeof(line))) {
         //parsing error
         if (!cmdParser(line, &cmd)) {
-            //parsing failed - handle later
+        printf("Parse error\n");
+        continue;
         }
+        printf("Parsed cmd type=%d, key=\"%s\", value=\"%s\"\n",
+           cmd.type,
+           cmd.key ? cmd.key : "(null)",
+           cmd.value ? cmd.value : "(null)");
     }
 
     /* db_list(db): return a list/array of keys that you can then bubble sort */
