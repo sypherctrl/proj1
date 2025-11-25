@@ -4,11 +4,7 @@
 #define MAXCAPACITY 256
 
     //entry struct
-    struct entry {
-        char *key;
-        char *value;
-        int in_use;     //for a flag; 0 = empty, 1 = used
-    };
+    struct entry { char *key; char *value; int in_use; };    //for a flag; 0 = empty, 1 = used 
 
     //database struct
     struct database {
@@ -19,14 +15,7 @@
     };
 
     //define an enum for cmd types
-    enum operationType {
-            CMD_GET,
-            CMD_SET,
-            CMD_DEL,
-            CMD_LIST,
-            CMD_QUIT,
-            CMD_UNKNOWN
-    };
+    enum operationType { CMD_GET, CMD_SET, CMD_DEL, CMD_LIST, CMD_QUIT, CMD_UNKNOWN };
 
     //define a struct to hold a parsed cmd
     struct operation {
@@ -35,9 +24,6 @@
         char *value;    //NULL if not needed
     };
 
-
-
-    
 
 // for ONLY input reading
 int getInput(char *buffer, int bufferSize) {
