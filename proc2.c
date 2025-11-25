@@ -158,7 +158,7 @@ int db_set(struct database *db, const char *key, const char *value) {
         } else {
             // find a free spot
             struct entry *free_slot = NULL;
-            for (int i = 0; i < db->capacity - 1; i++) {
+            for (int i = 0; i < db->capacity; i++) {
                 // e points to actual entry in database array
                 struct entry *e = &db->ptr_to_arrEnt[i];
                 if (e->in_use == 0) {
@@ -170,8 +170,7 @@ int db_set(struct database *db, const char *key, const char *value) {
                 printf("db_set insert: no free slot found but db-> count < capacity\n");
                 return 0;
             }
-            if (value == NULL) { printf("Value is NULL in Update Path\n"); return 0; }
-            if (value == "") { printf("Value is NULL in Update Path\n"); return 0; }
+            if (value == NULL) { printf("Insert path: value is NULL.\n"); return 0; }
 
             // allocate heap copy of key
             int key_len = strlen(key);
@@ -192,13 +191,15 @@ int db_set(struct database *db, const char *key, const char *value) {
             //allocate heap copy of value
             int value_len = strlen(value);
             char *value_copy;
-            value_copy = (char *)malloc(key_len + 1);    // allocate new heap buffer for the new key
+            value_copy = (char *)malloc(value_len + 1);    // allocate new heap buffer for the new key
             // if allocation fails, return 0 (do not change the entry)
             if (value_copy == NULL) {
             printf("Insert path: value allocation failed\n");
             return 0;
             } else {
                 // free key_copy to avoid a leak, then return 0
+                free(key_copy);
+                return 0;
 
                 // copy string from value into value_copy
                 for (int j = 0; j < value_len; j++) {
@@ -207,6 +208,10 @@ int db_set(struct database *db, const char *key, const char *value) {
                 value_copy[value_len] = '\0';
 
         }
+    free_slot->key = key_copy;
+    free_slot->value = value-copy;
+    free_slot->in_use = 1;
+    db->count++;
     }
     // make sure the only paths that reach return 1 are "update succeeded" or "insert succeeded"
     return 1; // 1 = success, 0 = failed
